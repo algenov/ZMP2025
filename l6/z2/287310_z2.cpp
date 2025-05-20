@@ -1,7 +1,8 @@
-//niestety jeszcze nie skonczylem program do konca ale wysyłam w takiej postaci, bo juz sa funkcje 1,3 i 5 z listy. jeszcze nie robilem tego ladnego wprowadzenia danych przez cin, bo na razie wszystko testuje i o wiele wygodniej to robic bez tego wprowadzenia
 #include <iostream>
 #include <cmath>
 using namespace std;
+
+int max_value = 0;
 
 struct node {
     int value;
@@ -24,12 +25,29 @@ void add_el(node* &first, int val){
     (*time_ptr).next = newnode;
 }
 
+int max_place(int max){
+    
+    int i=10;
+    int place = 1;
+    while (max/i!=0)
+    {
+        place = place + 1;
+        i = i * 10;
+    }  //a tu szukam go rozmiar
+    if (place%2==0)
+    {
+        place = place + 1;
+    }
+    
+    return place;
+    
+}
 
 struct node_tree {
     int value;
     node_tree* left;
     node_tree* right;
-    node_tree(int v) : value(v), left(nullptr) {}
+    node_tree(int v) : value(v), left(nullptr), right(nullptr) {}
 };
 
 node_tree* build_tree(int table[], int size){  //robie drzewo
@@ -54,7 +72,100 @@ node_tree* build_tree(int table[], int size){  //robie drzewo
     return start;
 }
 
-int height_tree(node_tree* start, int height){  //licze wysokosc drzewa, dlatego ze zawsze najwiecej elementow bedzie w lewej czesci to mozna zrobic w taki prosty sposob
+int how_many_el_in_tree(node_tree* start, int n=0){
+    if (start==nullptr)
+    {
+        return 0;
+    }
+    n = n+1;
+    if (start->left)
+    {
+        
+        n = how_many_el_in_tree(start->left, n);
+    }
+    if (start->right)
+    {
+        
+        n = how_many_el_in_tree(start->right, n);
+    }
+    return n;
+    
+    
+}
+
+int how_many_leaves_in_tree(node_tree* start, int n=0){
+    if (start==nullptr)
+    {
+        return 0;
+    }
+    if (start->left==nullptr && start->right==nullptr)
+    {
+        n = n+1;
+    }
+    
+    
+    if (start->left)
+    {
+        
+        n = how_many_leaves_in_tree(start->left, n);
+    }
+    if (start->right)
+    {
+        
+        n = how_many_leaves_in_tree(start->right, n);
+    }
+    return n;
+}
+
+bool if_el_in_tree(node_tree* start, int el_to_find, bool n=0){
+    if (start==nullptr)
+    {
+        return (0);
+    }
+
+    if (n)
+    {
+        return (n);
+    }
+    if (el_to_find==start->value)
+    {
+
+        n = 1;
+        return n;
+    }
+    
+    if (start->left)
+    {
+        
+        n = if_el_in_tree(start->left, el_to_find, n);
+
+    }
+    if (start->right)
+    {
+        
+        n = if_el_in_tree(start->right, el_to_find, n);
+
+    }
+    return n;
+}
+
+node_tree* combine_trees(int value, node_tree* start1, node_tree* start2){
+    node_tree* new_start = new node_tree(value);
+    if (how_many_el_in_tree(start2)>how_many_el_in_tree(start1))
+    {
+        (*new_start).left = start2;
+        (*new_start).right = start1;
+    }else
+    {
+        (*new_start).left = start1;
+        (*new_start).right = start2;
+    }
+    return (new_start);
+}
+
+
+
+int height_tree(node_tree* start, int height=0){  //licze wysokosc drzewa, dlatego ze zawsze najwiecej elementow bedzie w lewej czesci to mozna zrobic w taki prosty sposob
     height = height+1;
     if ((*start).left!=nullptr)
     {
@@ -65,24 +176,29 @@ int height_tree(node_tree* start, int height){  //licze wysokosc drzewa, dlatego
 
 
 
-void prepare_for_showing(node_tree* start, node* table_levels[], int n, int place, int height){
+int prepare_for_showing(node_tree* start, node* table_levels[], int n){
+    if (start->value>max_value)
+    {
+        max_value = start->value;
+    }
+    
     
     add_el(table_levels[n], (*start).value);  //tu robie z kazdego pozioma drzewa strukture, zeby potem ladnie wypisywac
 
     if ((*start).left!=nullptr)
     {
         n = n + 1;  //n odpowiada numeru pozioma
-        prepare_for_showing((*start).left, table_levels, n, place, height);
+        prepare_for_showing((*start).left, table_levels, n);
         
     }
     if ((*start).right!=nullptr)
     {
-        prepare_for_showing((*start).right, table_levels, n, place, height);
+        prepare_for_showing((*start).right, table_levels, n);
     }
     
     
 
-
+    return max_value;
     
     
 }
@@ -100,13 +216,27 @@ int length_of_number(int number){  //szuka dlugosc liczby
     
 }
 
-void show_table(node* table_levels[], int place, int height){
+void show_tree(node_tree* start){
+    
+    
+    int height = height_tree(start);
+    node* table_levels[height];
+    for (size_t i = 0; i < height; i++)
+    {
+        table_levels[i] = nullptr;
+    }
+    int n = 0;
+    max_value = 0;
+    max_value = prepare_for_showing(start, table_levels, n);
+    int place = max_place(max_value);
     node* time_ptr;
     int differ = (place-1)/2;
     int sum_place = pow(2, height-1)*place + pow(2, height-1)-1;
     int left_tabulation = (sum_place-place)/2;
     int mid_tabulation = 0;
     int underlining = 0;  //te wszystkie przemienne potrzebne zeby obliczac liczbe spacji na poczatku i pomiedzy elementami drzewa
+
+
     for (size_t i = 0; i < height; i++)
     {   
         time_ptr = table_levels[i];
@@ -141,62 +271,43 @@ void show_table(node* table_levels[], int place, int height){
 }
 
 
-int max_place(int tab1[],int size1, int tab2[], int size2){
-    int max=0;
-    for (size_t i = 0; i < size1; i++)
-    {
-        if (tab1[i]>max)
-        {
-            max = tab1[i];
-        }
-        
-    }
-    for (size_t i = 0; i < size2; i++)
-    {
-        if (tab2[i]>max)
-        {
-            max = tab2[i];
-        }
-        
-    }  //tu szukam najwiekszy element
-    int i=10;
-    int place = 1;
-    while (max/i!=0)
-    {
-        place = place + 1;
-        i = i * 10;
-    }  //a tu szukam go rozmiar
-    if (place%2==0)
-    {
-        place = place + 1;
-    }
-    
-    return place;
-    
-}
 
 int main() {
-    int n1, n2, n;
-    n = 0;
-    n1 = 3;
-    n2 = 15;
-    int tab1[n1] = {1,2,3}; 
-    int tab2[n2] = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15};
+    int n1, n2, r, s;
+    cout << "prosze podac liczbe elementow w pierwszej tablicy";
+    cin >> n1;
+    cout << "prosze podac liczbe elementow w drugiej tablicy";
+    cin >> n2;
+    cout << "prosze podac wartosc w korniu przy sklejeniu drzew";
+    cin >> r;
+    cout << "prosze podac poszukiwana wartosc";
+    cin >> s;
+    cout << "prosze podac liczby do uzupelnienia tablic";
+    int tab1[n1]; 
+    int tab2[n2];
+    for (size_t i = 0; i < n1; i++)
+    {
+        cin >> tab1[i];
+    }
+    for (size_t i = 0; i < n2; i++)
+    {
+        cin >> tab2[i];
+    }
     node_tree* start1 = build_tree(tab1, n1);
     node_tree* start2 = build_tree(tab2, n2);
-    int height = height_tree(start2, 0);
-    node* table_levels[height];
-    for (size_t i = 0; i < height; i++)
+    node_tree* start3 = combine_trees(r, start1, start2);
+    show_tree(start3);
+    cout << "liczba wezlow" << "\n" << how_many_el_in_tree(start3)-how_many_leaves_in_tree(start3) << "\n";
+    cout << "lliczba lisci" << "\n" << how_many_leaves_in_tree(start3) << "\n";
+    cout << "wysokosc drzewa" << "\n" << height_tree(start3) << "\n";
+    
+    
+    cout << "czy " << s << " jest w drzewie?" << "\n";
+    if (if_el_in_tree(start3, s))
     {
-        table_levels[i] = nullptr;
+        cout << "tak" << "\n";
+    }else{
+        cout << "nie" << "\n";
     }
-    int place = max_place(tab1, n1, tab2, n2);
-    prepare_for_showing(start2, table_levels, n, place, height);
-    show_table(table_levels, place, height);
-    
-
-    
-
-    
-    
+        
 }
